@@ -4,6 +4,7 @@ import { listStateSystem } from './listStateSystem'
 import { sizeSystem } from './sizeSystem'
 import { stateFlagsSystem } from './stateFlagsSystem'
 import { ListItem } from './interfaces'
+import { initialTopMostItemIndexSystem } from './initialTopMostItemIndexSystem'
 
 /**
  * Fixes upward scrolling by calculating and compensation from changed item heights, using scrollBy.
@@ -14,13 +15,14 @@ export const upwardScrollFixSystem = u.system(
     { isScrolling },
     { listState },
     { beforeUnshiftWith, sizes },
+    { initialTopMostItemIndex },
   ]) => {
     const deviationOffset = u.streamFromEmitter(
       u.pipe(
         listState,
-        u.withLatestFrom(scrollTop, scrollDirection, scrollingInProgress),
-        u.filter(([, scrollTop, scrollDirection, scrollingInProgress]) => {
-          return !scrollingInProgress && scrollTop !== 0 && scrollDirection === UP
+        u.withLatestFrom(scrollTop, scrollDirection, scrollingInProgress, initialTopMostItemIndex),
+        u.filter(([, scrollTop, scrollDirection, scrollingInProgress, initialTopMostItemIndex]) => {
+          return initialTopMostItemIndex > 0 && !scrollingInProgress && scrollTop !== 0 && scrollDirection === UP
         }),
         u.map(([state]) => state),
         u.scan(
@@ -45,7 +47,8 @@ export const upwardScrollFixSystem = u.system(
                       continue
                     }
 
-                    if (item.offset !== prevItem.offset) { // && prevItem.offset < scrollTop or maybe item.offset < scrollTop ?
+                    if (item.offset !== prevItem.offset) {
+                      // && prevItem.offset < scrollTop or maybe item.offset < scrollTop ?
                       newDev = item.offset - prevItem.offset
                       break
                     }
@@ -106,5 +109,5 @@ export const upwardScrollFixSystem = u.system(
 
     return { deviation }
   },
-  u.tup(domIOSystem, stateFlagsSystem, listStateSystem, sizeSystem)
+  u.tup(domIOSystem, stateFlagsSystem, listStateSystem, sizeSystem, initialTopMostItemIndexSystem)
 )
