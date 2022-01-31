@@ -345,7 +345,7 @@ export function buildWindowScroller({ usePublisher, useEmitter, useEmitterValue 
     )
 
     useIsomorphicLayoutEffect(() => {
-      scrollerRef.current = window
+      scrollerRef.current = document.getElementById("scroller-element")
       return () => {
         scrollerRef.current = null
       }
